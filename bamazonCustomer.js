@@ -32,7 +32,7 @@ function afterConnection() {
     inquirer.prompt([{
         type: "list",
         message: "What would you like to do?",
-        choices: ["Buy item(s)", "Shop in department", "Exit"],
+        choices: ["Buy item(s)", "Shop by department", "Exit"],
         name: "runThis"
     }, ]).then(function (inq) {
 
@@ -40,10 +40,11 @@ function afterConnection() {
             case ("Buy item(s)"):
                 buyItem();
                 break;
-            case ("Shop in department"):
+            case ("Shop by department"):
                 shopDepartment();
                 break;
             case ("Exit"):
+                console.log("Thanks for using Bamazon!");
                 connection.end();
                 break;
         }
@@ -69,7 +70,7 @@ function buyItem() {
             connection.query("SELECT * FROM products WHERE ?", [{
                 id: inq.item
             }], function (err, res1) {
-                if (res1[0].stock > inq.amount) {
+                if (res1[0].stock >= inq.amount) {
                     connection.query("UPDATE products SET stock = stock - ? WHERE ?",
                         [
                             parseInt(inq.amount),
@@ -84,7 +85,15 @@ function buyItem() {
                             } else {
                                 console.log(inq.amount + " units of " + res1[0].item + " have been purchased for $" + (inq.amount * res1[0].price) + " !");
                             }
-
+                            connection.query("UPDATE departments SET product_sales = product_sales + ? WHERE ? ",
+                            [
+                                (inq.amount * res1[0].price),
+                            {
+                                department: res1[0].department
+                            }
+                            ], function (err, res) {
+                                if (err) throw err;
+                            });
                             afterConnection();
                         });
                 } else {
