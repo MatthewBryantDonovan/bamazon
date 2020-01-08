@@ -82,34 +82,40 @@ function buyItem() {
             connection.query("SELECT * FROM products WHERE ?", [{
                 id: inq.item
             }], function (err, res1) {
-                if (res1[0].stock >= inq.amount) {
-                    connection.query("UPDATE products SET stock = stock - ? WHERE ?",
-                        [
-                            parseInt(inq.amount),
-                            {
-                                id: inq.item
-                            }
-                        ],
-                        function (err, res2) {
-                            if (err) throw err;
-                            if (inq.amount > 1) {
-                                console.log(inq.amount + " unit of " + res1[0].item + " has been purchased for $" + (inq.amount * res1[0].price) + " !");
-                            } else {
-                                console.log(inq.amount + " units of " + res1[0].item + " have been purchased for $" + (inq.amount * res1[0].price) + " !");
-                            }
-                            connection.query("UPDATE departments SET product_sales = product_sales + ? WHERE ? ",
+                if (res1[0] != undefined) {
+                    if (res1[0].stock >= inq.amount) {
+                        connection.query("UPDATE products SET stock = stock - ? WHERE ?",
                             [
-                                (inq.amount * res1[0].price),
-                            {
-                                department: res1[0].department
-                            }
-                            ], function (err, res) {
+                                parseInt(inq.amount),
+                                {
+                                    id: inq.item
+                                }
+                            ],
+                            function (err, res2) {
                                 if (err) throw err;
+                                if (inq.amount > 1) {
+                                    console.log(inq.amount + " unit of " + res1[0].item + " has been purchased for $" + (inq.amount * res1[0].price) + " !");
+                                } else {
+                                    console.log(inq.amount + " units of " + res1[0].item + " have been purchased for $" + (inq.amount * res1[0].price) + " !");
+                                }
+                                connection.query("UPDATE departments SET product_sales = product_sales + ? WHERE ? ",
+                                    [
+                                        (inq.amount * res1[0].price),
+                                        {
+                                            department: res1[0].department
+                                        }
+                                    ],
+                                    function (err, res) {
+                                        if (err) throw err;
+                                    });
+                                afterConnection();
                             });
-                            afterConnection();
-                        });
+                    } else {
+                        console.log("There are not enough of that item available to purchase!");
+                        afterConnection();
+                    }
                 } else {
-                    console.log("There are not enough of that item available to purchase!");
+                    console.log("That item doesn't exist! Please try a different item ID!");
                     afterConnection();
                 }
                 if (err) throw err;

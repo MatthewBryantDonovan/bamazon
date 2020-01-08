@@ -89,34 +89,40 @@ function buyItem() {
             connection.query("SELECT * FROM products WHERE ?", [{
                 id: inq.item
             }], function (err, res1) {
-                if (res1[0].stock >= inq.amount) {
-                    connection.query("UPDATE products SET stock = stock - ? WHERE ?",
-                        [
-                            parseInt(inq.amount),
-                            {
-                                id: inq.item
-                            }
-                        ],
-                        function (err, res2) {
-                            if (err) throw err;
-                            if (inq.amount > 1) {
-                                console.log(inq.amount + " unit of " + res1[0].item + " has been purchased for $" + (inq.amount * res1[0].price) + " !");
-                            } else {
-                                console.log(inq.amount + " units of " + res1[0].item + " have been purchased for $" + (inq.amount * res1[0].price) + " !");
-                            }
-                            connection.query("UPDATE departments SET product_sales = product_sales + ? WHERE ? ",
+                if (res1[0] != undefined) {
+                    if (res1[0].stock >= inq.amount) {
+                        connection.query("UPDATE products SET stock = stock - ? WHERE ?",
                             [
-                                (inq.amount * res1[0].price),
-                            {
-                                department: res1[0].department
-                            }
-                            ], function (err, res) {
+                                parseInt(inq.amount),
+                                {
+                                    id: inq.item
+                                }
+                            ],
+                            function (err, res2) {
                                 if (err) throw err;
+                                if (inq.amount > 1) {
+                                    console.log(inq.amount + " unit of " + res1[0].item + " has been purchased for $" + (inq.amount * res1[0].price) + " !");
+                                } else {
+                                    console.log(inq.amount + " units of " + res1[0].item + " have been purchased for $" + (inq.amount * res1[0].price) + " !");
+                                }
+                                connection.query("UPDATE departments SET product_sales = product_sales + ? WHERE ? ",
+                                    [
+                                        (inq.amount * res1[0].price),
+                                        {
+                                            department: res1[0].department
+                                        }
+                                    ],
+                                    function (err, res) {
+                                        if (err) throw err;
+                                    });
+                                afterConnection();
                             });
-                            afterConnection();
-                        });
+                    } else {
+                        console.log("There are not enough of that item available to purchase!");
+                        afterConnection();
+                    }
                 } else {
-                    console.log("There are not enough of that item available to purchase!");
+                    console.log("That item doesn't exist! Please try a different item ID!");
                     afterConnection();
                 }
                 if (err) throw err;
@@ -230,12 +236,12 @@ function addNewProduct() {
 
         connection.query("SELECT DISTINCT department FROM products", function (err, res3) {
             if (err) throw err;
-    
+
             for (let index = 0; index < res3.length; index++) {
                 departments.push(res3[index].department);
             }
 
-            if(departments.includes(inq.itemDept)){
+            if (departments.includes(inq.itemDept)) {
                 connection.query("INSERT INTO products (item, department, price, stock) VALUES (?, ?, ?, ?);", [
                     inq.itemName,
                     inq.itemDept,
@@ -243,7 +249,7 @@ function addNewProduct() {
                     inq.itemStock
                 ], function (err, res1) {
                     if (err) throw err;
-                    if(inq.itemStock > 1){
+                    if (inq.itemStock > 1) {
                         console.log(inq.itemStock + " units of " + inq.itemName + " have been added to the " +
                             inq.itemDept + " department at $" + inq.itemPrice + " per unit.");
                     } else {
@@ -262,15 +268,16 @@ function addNewProduct() {
     });
 };
 
-function viewSalesByDept(){
-        connection.query("SELECT *, product_sales - over_head_costs as total_profit  FROM departments " + department, function (err, res) {
-            if (err) throw err;
-            console.table(res);
-            afterConnection();
-        });
+function viewSalesByDept() {
+    connection.query("SELECT *, product_sales - over_head_costs as total_profit  FROM departments " + department, function (err, res) {
+        if (err) throw err;
+        console.table(res);
+        afterConnection();
+    });
 };
 
-function createNewDept(){
+function createNewDept() {
+
     inquirer.prompt([{
         type: "input",
         message: "Please enter the department name?",
@@ -279,16 +286,32 @@ function createNewDept(){
         type: "input",
         message: "What is the departments 'Over Head Costs'?",
         name: "deptOverHead"
-    },]).then(function (inq) {
+    }, ]).then(function (inq) {
 
-        connection.query("INSERT INTO departments (department, over_head_costs, product_sales) VALUES (?, ?, " + 0 + ");", [
-            inq.deptName,
-            inq.deptOverHead
-        ], function (err, res1) {
+        connection.query("SELECT DISTINCT department FROM departments", function (err, res3) {
             if (err) throw err;
-                console.log("A department with the name '" + inq.deptName + "' has been added with an 'Over Head Cost' of $" +
-                    inq.deptOverHead + ".");
-            afterConnection();
+
+            for (let index = 0; index < res3.length; index++) {
+                departments.push(res3[index].department);
+            }
+
+            if (!departments.includes(inq.deptName)) {
+                connection.query("INSERT INTO departments (department, over_head_costs, product_sales) VALUES (?, ?, " + 0 + ");", [
+                    inq.deptName,
+                    inq.deptOverHead
+                ], function (err, res1) {
+                    if (err) throw err;
+                    console.log("A department with the name '" + inq.deptName + "' has been added with an 'Over Head Cost' of $" +
+                        inq.deptOverHead + ".");
+                    afterConnection();
+                });
+
+            } else {
+                console.log(" That department already exists! Please check the spelling of the department in the case it shouldn't exist.");
+                afterConnection();
+            };
+
         });
+
     });
 };
