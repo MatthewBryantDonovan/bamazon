@@ -5,6 +5,7 @@ const ct = require('console.table');
 var department = "";
 var departments = [];
 
+//Connection info.
 var connection = mysql.createConnection({
     host: "localhost",
 
@@ -19,6 +20,7 @@ var connection = mysql.createConnection({
     database: "bamazon"
 });
 
+// Establish connection to database.
 connection.connect(function (err) {
     if (err) throw err;
     console.log("connected as id " + connection.threadId);
@@ -26,6 +28,7 @@ connection.connect(function (err) {
 
 });
 
+// After connected run BamazonSupervisor client.
 function afterConnection() {
     department = "";
     departments = [];
@@ -70,6 +73,7 @@ function afterConnection() {
     });
 }
 
+// Allow the user to buy an item.
 function buyItem() {
     connection.query("SELECT * FROM products " + department, function (err, res) {
         //console.log(stmt.sql);
@@ -129,8 +133,9 @@ function buyItem() {
             });
         });
     });
-};
+}
 
+// Allow the user to shop by department.
 function shopDepartment() {
     connection.query("SELECT DISTINCT department FROM products", function (err, res3) {
         if (err) throw err;
@@ -160,7 +165,7 @@ function viewProducts() {
         console.table(res);
         afterConnection();
     });
-};
+}
 
 //List all items with an inventory count lower than five.
 function lowInventory() {
@@ -170,7 +175,7 @@ function lowInventory() {
         console.table(res);
         afterConnection();
     });
-};
+}
 
 //Add more quantity to any item currently in the store.
 function addToQuantity() {
@@ -212,7 +217,7 @@ function addToQuantity() {
             });
         });
     });
-};
+}
 
 //Add a completely new product to the store.
 function addNewProduct() {
@@ -261,21 +266,23 @@ function addNewProduct() {
             } else {
                 console.log("Please check the spelling of the department in the case it already exists, if not, please add the new department before adding this item!");
                 afterConnection();
-            };
+            }
 
         });
 
     });
-};
+}
 
+//View the sales of each department.
 function viewSalesByDept() {
     connection.query("SELECT *, product_sales - over_head_costs as total_profit  FROM departments " + department, function (err, res) {
         if (err) throw err;
         console.table(res);
         afterConnection();
     });
-};
+}
 
+//Create a new department.
 function createNewDept() {
 
     inquirer.prompt([{
@@ -309,9 +316,9 @@ function createNewDept() {
             } else {
                 console.log(" That department already exists! Please check the spelling of the department in the case it shouldn't exist.");
                 afterConnection();
-            };
+            }
 
         });
 
     });
-};
+}

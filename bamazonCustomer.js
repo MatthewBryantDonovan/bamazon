@@ -5,6 +5,7 @@ const ct = require('console.table');
 var department = "";
 var departments = [];
 
+//Connection info.
 var connection = mysql.createConnection({
     host: "localhost",
 
@@ -19,6 +20,7 @@ var connection = mysql.createConnection({
     database: "bamazon"
 });
 
+// Establish connection to database.
 connection.connect(function (err) {
     if (err) throw err;
     console.log("connected as id " + connection.threadId);
@@ -26,6 +28,7 @@ connection.connect(function (err) {
 
 });
 
+// After connected run BamazonCustomer client.
 function afterConnection() {
     department = "";
     departments = [];
@@ -51,6 +54,7 @@ function afterConnection() {
     });
 }
 
+// Allow the user to buy an item.
 function buyItem() {
     connection.query("SELECT * FROM products " + department, function (err, res) {
         //console.log(stmt.sql);
@@ -110,8 +114,9 @@ function buyItem() {
             });
         });
     });
-};
+}
 
+// Allow the user to shop by department.
 function shopDepartment() {
     connection.query("SELECT DISTINCT department FROM products", function (err, res3) {
         if (err) throw err;
